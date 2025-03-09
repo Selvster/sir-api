@@ -28,7 +28,7 @@ class UserRepository extends AppRepository
             ]);
         }
 
-        $token = $user->createToken('login')->plainTextToken;
+        $token = $user->createToken('user')->plainTextToken;
 
         return response()->json([
             'token' => $token,
@@ -38,10 +38,22 @@ class UserRepository extends AppRepository
 
     public function register(Request $request)
     {
-
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'type' => 'required|string|in:student,teacher',
+            'dob' => 'required|date|before:today',
+            'gender' => 'required|string|in:male,female',
+        ]);
 
         $user = User::create([
-        
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => password_hash($request->password, PASSWORD_DEFAULT),
+            'type' => $request->type,
+            'dob' => $request->dob,
+            'gender' => $request->gender
         ]);
 
         $token = $user->createToken('user')->plainTextToken;

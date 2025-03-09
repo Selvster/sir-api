@@ -11,4 +11,8 @@ class TeacherClassStudents extends Model
     use HasFactory;
     use SoftDeletes;
     protected $fillable = ['student_id','class_id'];
+
+    public function student(){
+        return $this->belongsTo(User::class,'student_id');
+    }
 }

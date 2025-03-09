@@ -44,4 +44,13 @@ class User extends Authenticatable
     protected $casts = [
         'password' => 'hashed',
     ];
+
+    public function classes()
+    {
+        if ($this->type === 'teacher') {
+            return $this->hasMany(TeacherClass::class, 'teacher_id');
+        } elseif ($this->type === 'student') {
+            return $this->belongsToMany(TeacherClassStudents::class, 'teacher_class_students', 'student_id', 'class_id');
+        }
+    }
 }

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Repositories\TeacherClassStudentsRepository;
+use App\Repositories\ClassRepository;
 
-class TeacherClassStudentsController extends Controller
+class ClassController extends Controller
 {
     protected $repository;
-    public function __construct(TeacherClassStudentsRepository $repository)
+    public function __construct(ClassRepository $repository)
     {
         parent::__construct($repository);
         $this->repository = $repository;

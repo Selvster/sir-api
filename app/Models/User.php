@@ -45,12 +45,24 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function classes()
+    public function student()
     {
-        if ($this->type === 'teacher') {
-            return $this->hasMany(TeacherClass::class, 'teacher_id');
-        } elseif ($this->type === 'student') {
-            return $this->belongsToMany(TeacherClassStudents::class, 'teacher_class_students', 'student_id', 'class_id');
-        }
+        return $this->hasOne(Student::class);
     }
+
+    public function teacher()
+    {
+        return $this->hasOne(Teacher::class);
+    }
+
+    public function isTeacher()
+    {
+        return $this->type === 'Teacher';
+    }
+
+    public function isStudent()
+    {
+        return $this->type === 'Student';
+    }
+
 }

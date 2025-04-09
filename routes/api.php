@@ -2,9 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\TeacherClassController;
-use App\Http\Controllers\TeacherClassRequestsController;
-use App\Http\Controllers\TeacherClassStudentsController;
+use App\Http\Controllers\ClassController;
+use App\Http\Controllers\ClassRequestsController;
+use App\Http\Controllers\ClassStudentsController;
 
 //Auth Routes
 
@@ -14,8 +14,9 @@ Route::post('auth/register', [UserController::class, 'register']);
 //Resources
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::resource('teacher_classes',TeacherClassController::class);
-    Route::resource('teacher_classes_requests',TeacherClassRequestsController::class);
-    Route::resource('teacher_classes_students',TeacherClassStudentsController::class);
-
+    Route::resource('classes',ClassController::class);
+    Route::resource('classes_requests',ClassRequestsController::class);
+    Route::post('classes_requests/{id}/accept', [ClassRequestsController::class, 'accept']);
+    Route::post('classes_requests/{id}/reject', [ClassRequestsController::class, 'reject']);
+    Route::resource('classes_students',ClassStudentsController::class);
 });

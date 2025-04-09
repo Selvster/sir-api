@@ -5,6 +5,8 @@ namespace App\Repositories;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use App\Models\Student;
+use App\Models\Teacher;
 
 class UserRepository extends AppRepository
 {
@@ -32,20 +34,18 @@ class UserRepository extends AppRepository
 
         return response()->json([
             'token' => $token,
-            'user' => $user
+            'type' => $user->type,
         ]);
     }
 
     public function register(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-            'type' => 'required|string|in:student,teacher',
-            'dob' => 'required|date|before:today',
-            'gender' => 'required|string|in:male,female',
-        ]);
+        //Validate unique email only
+        if (User::where('email', $request->input('email'))->first()) {
+            return response()->json([
+                'message' => 'Email already exists'
+            ], 422);
+        }
 
         $user = User::create([
             'name' => $request->name,
@@ -55,6 +55,18 @@ class UserRepository extends AppRepository
             'dob' => $request->dob,
             'gender' => $request->gender
         ]);
+
+        if ($user) {
+            if ($request->type == 'Student') {
+                $student = new Student();
+                $student->user_id = $user->id;
+                $student->save();
+            } else if ($request->type == 'Teacher') {
+                $teacher = new Teacher();
+                $teacher->user_id = $user->id;
+                $teacher->save();
+            }
+        }
 
         $token = $user->createToken('user')->plainTextToken;
 

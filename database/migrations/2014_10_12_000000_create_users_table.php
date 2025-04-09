@@ -15,10 +15,24 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->enum('gender', ['male','female']);
-            $table->date('dob');
-            $table->enum('type',['teacher','student']);
+            $table->enum('gender', ['Male','Female']);
+            $table->string('dob');
+            $table->enum('type',['Teacher','Student']);
             $table->string('password');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::create('teachers', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::create('students', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users');
             $table->timestamps();
             $table->softDeletes();
         });

@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('quizzes', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('class_id')->constrained('classes');
-            $table->string('name');
-            $table->text('description');
-            $table->integer('duration_in_minutes');
-            $table->timestamps();
+        Schema::table('questions', function (Blueprint $table) {
+            $table->text('model_answer')->change();
         });
     }
 
@@ -26,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('quizzes');
+        Schema::table('questions', function (Blueprint $table) {
+            $table->string('model_answer')->change();
+        });
     }
 };

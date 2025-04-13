@@ -5,6 +5,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ClassRequestsController;
 use App\Http\Controllers\ClassStudentsController;
+use App\Http\Controllers\QuizController;
 
 //Auth Routes
 
@@ -19,4 +20,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('classes_requests/{id}/accept', [ClassRequestsController::class, 'accept']);
     Route::post('classes_requests/{id}/reject', [ClassRequestsController::class, 'reject']);
     Route::resource('classes_students',ClassStudentsController::class);
+    Route::resource('quizzes',QuizController::class);
 });

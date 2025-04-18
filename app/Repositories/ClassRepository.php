@@ -47,6 +47,21 @@ class ClassRepository extends AppRepository
         ], 201);
     }
 
+    public function removeStudent($id, $student_id)
+    {
+        $class = $this->model->find($id);
+        if (!$class) {
+            return response()->json([
+                'message' => 'Class not found',
+            ], 404);
+        }
+
+        $class->students()->detach($student_id);
+
+        return response()->json([
+            'message' => 'Student removed from class successfully',
+        ], 200);
+    }
 
 
 }

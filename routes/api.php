@@ -16,6 +16,7 @@ Route::post('auth/register', [UserController::class, 'register']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::resource('classes',ClassController::class);
+    Route::delete('classes/{id}/students/{student_id}/remove', [ClassController::class, 'removeStudent']);
     Route::resource('classes_requests',ClassRequestsController::class);
     Route::post('classes_requests/{id}/accept', [ClassRequestsController::class, 'accept']);
     Route::post('classes_requests/{id}/reject', [ClassRequestsController::class, 'reject']);

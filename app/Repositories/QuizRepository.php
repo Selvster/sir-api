@@ -17,19 +17,19 @@ class QuizRepository extends AppRepository
     {
         $with = $request->with ? $request->with : [];
 
-        // $query =
-        //     Auth()->user()->isStudent() ?
-        //     $this->model->with($with)
-        //         ->whereHas('students', function ($query) {
-        //             $query->where('student_id', auth()->user()->student->id);
-        //         })
-        //     :
-        //     $this->model->with($with)
-        //         ->where('teacher_id', auth()->user()->teacher->id);
+        $query =
+            Auth()->user()->isStudent() ?
+            []
+            :
+            $this->model->with($with)
+            ->whereHas('class', function ($query) {
+                $query->where('teacher_id', auth()->user()->teacher->id);
+            });
+        
 
 
 
-        // return $this->dataTable($query, $request);
+        return $this->dataTable($query, $request);
     }
     public function store(Request $request)
     {

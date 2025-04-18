@@ -13,5 +13,9 @@ class ClassController extends Controller
         parent::__construct($repository);
         $this->repository = $repository;
     }
+
+    public function removeStudent($id, $student_id){
+        return $this->repository->removeStudent($id, $student_id);
+    }
    
 }

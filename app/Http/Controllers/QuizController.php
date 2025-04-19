@@ -17,5 +17,9 @@ class QuizController extends Controller
     public function attempt($id){
         return $this->repository->attempt($id);
     }
+
+    public function submit(Request $request){
+        return $this->repository->submit($request);
+    }
    
 }

@@ -23,4 +23,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::resource('classes_students',ClassStudentsController::class);
     Route::resource('quizzes',QuizController::class);
     Route::get('quizzes/{id}/attempt', [QuizController::class, 'attempt']);
+    Route::post('quizzes/submit', [QuizController::class, 'submit']);
 });

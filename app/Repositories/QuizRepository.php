@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Quiz;
@@ -17,23 +18,34 @@ class QuizRepository extends AppRepository
     {
         $with = $request->with ? $request->with : [];
 
-        $query =
-            Auth()->user()->isStudent() ?
+        if (auth()->user()->isStudent()) {
+            $studentId = auth()->user()->student->id;
+
             $query = $this->model->with($with)
-                ->whereHas('class.students', function ($q) {
-                    $q->where('student_id', auth()->user()->student->id);
+                ->whereHas('class.students', function ($q) use ($studentId) {
+                    $q->where('student_id', $studentId);
                 })
-            :
-            $this->model->with($with)
+                ->whereDoesntHave('results', function ($q) use ($studentId) {
+                    $q->where('student_id', $studentId);
+                })
+                ->where(function ($q) use ($studentId) {
+                    $q->whereDoesntHave('attempts', function ($query) use ($studentId) {
+                        $query->where('student_id', $studentId);
+                    })->orWhereHas('attempts', function ($query) use ($studentId) {
+                        $query->where('student_id', $studentId)
+                            ->whereRaw('TIMESTAMPDIFF(SECOND, created_at, NOW()) < duration * 60');
+                    });
+                });
+        } else {
+            $query = $this->model->with($with)
                 ->whereHas('class', function ($query) {
                     $query->where('teacher_id', auth()->user()->teacher->id);
                 });
-
-
-
+        }
 
         return $this->dataTable($query, $request);
     }
+
     public function store(Request $request)
     {
         $name = $request->name;
@@ -142,6 +154,67 @@ class QuizRepository extends AppRepository
 
     }
 
+    public function submit(Request $request)
+    {
+        $quiz_id = $request->quiz_id;
+        $quiz = $this->model->find($quiz_id);
+        $student_id = auth()->user()->student->id;
+        $questions = $request->questions;
+
+        $total_mark = 0;
+        $student_mark = 0;
+
+        foreach ($questions as $question) {
+            $originalQuestion = Question::find(id: $question['question_id']);
+            //add the mark of the question to the total mark
+            $total_mark += $originalQuestion['mark'];
+            if ($question['type'] == 'mcq') {
+                //check if the answer is correct
+                $correctAnswer = $originalQuestion->model_answer;
+                $studentAnswer = $question['answer'];
+                if ($correctAnswer == $studentAnswer) {
+                    //add the mark of the question to the student mark
+                    $student_mark += $originalQuestion['mark'];
+                }
+                //save the answer in the answers table
+                $originalQuestion->answers()->create([
+                    'student_id' => $student_id,
+                    'question_id' => $question['question_id'],
+                    'answer' => $studentAnswer,
+                    'mark' => $correctAnswer == $studentAnswer ? $originalQuestion['mark'] : 0,
+                    'is_correct' => $correctAnswer == $studentAnswer ? 1 : 0,
+                ]);
+
+            } else {
+                //save the answer in the answers table
+                $answer = $originalQuestion->answers()->create([
+                    'student_id' => $student_id,
+                    'question_id' => $question['question_id'],
+                    'answer' => $question['answer'],
+                    'mark' => $question['score'] ? $question['score'] * $originalQuestion['mark'] : 0,
+                    'is_correct' => 0,
+                ]);
+                //save the feedback in the answer_feedback table
+                $answer->feedback()->create([
+                    'answer_id' => $answer->id,
+                    'feedback' => $question['feedback'],
+                ]);
+                //add the mark of the question to the student mark
+                if ($question['score']) {
+                    $student_mark += $question['score'] * $originalQuestion['mark'];
+                }
+            }
+        }
+        $quiz->results()->create([
+            'student_id' => $student_id,
+            'quiz_id' => $quiz_id,
+            'total_mark' => $total_mark,
+            'student_mark' => $student_mark,
+        ]);
+        return response()->json([
+            'message' => 'Quiz submitted successfully'
+        ], 200);
+    }
 
 
 }

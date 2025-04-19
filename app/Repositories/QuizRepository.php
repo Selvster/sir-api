@@ -19,13 +19,16 @@ class QuizRepository extends AppRepository
 
         $query =
             Auth()->user()->isStudent() ?
-            []
+            $query = $this->model->with($with)
+                ->whereHas('class.students', function ($q) {
+                    $q->where('student_id', auth()->user()->student->id);
+                })
             :
             $this->model->with($with)
-            ->whereHas('class', function ($query) {
-                $query->where('teacher_id', auth()->user()->teacher->id);
-            });
-        
+                ->whereHas('class', function ($query) {
+                    $query->where('teacher_id', auth()->user()->teacher->id);
+                });
+
 
 
 
@@ -49,6 +52,7 @@ class QuizRepository extends AppRepository
         $quiz->class_id = $class_id;
         $quiz->duration = $duration;
         $quiz->is_active = $is_active;
+        $quiz->show_results = $request->show_results;
         $quiz->save();
 
         //Create Essay Questions
@@ -84,6 +88,58 @@ class QuizRepository extends AppRepository
         return response()->json([
             'message' => 'Quiz created successfully',
         ], 201);
+    }
+
+    public function attempt($id)
+    {
+
+        $quiz = $this->model->with(['questions.choices'])->find($id);
+
+        if (!$quiz) {
+            return response()->json([
+                'message' => 'Quiz not found',
+            ], 404);
+        }
+
+        if ($quiz->is_active == 0) {
+            return response()->json([
+                'message' => 'Quiz is not active',
+            ], 422);
+        }
+
+        $studentId = auth()->user()->student->id;
+
+        // Check student belongs to the class
+        if (!$quiz->class->students->contains('id', $studentId)) {
+            return response()->json([
+                'message' => 'You are not in this class',
+            ], 422);
+        }
+
+        $duration = $quiz->duration * 60;
+        $attempt = $quiz->attempts()->where('student_id', $studentId)->first();
+
+        if ($attempt) {
+            $timeElapsed = $attempt->created_at->diffInSeconds(now());
+
+            if ($timeElapsed >= $duration) {
+                return response()->json([
+                    'message' => 'Quiz time is over',
+                ], 422);
+            } else {
+                $duration -= $timeElapsed;
+            }
+        } else {
+            $quiz->attempts()->create([
+                'student_id' => $studentId,
+            ]);
+        }
+
+        return response()->json([
+            'quiz' => $quiz->load(['questions.choices']),
+            'duration' => $duration,
+        ], 200);
+
     }
 
 

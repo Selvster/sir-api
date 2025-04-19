@@ -13,5 +13,9 @@ class QuizController extends Controller
         parent::__construct($repository);
         $this->repository = $repository;
     }
+
+    public function attempt($id){
+        return $this->repository->attempt($id);
+    }
    
 }

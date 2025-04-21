@@ -16,6 +16,7 @@ class Answer extends Model
         'answer',
         'mark',
         'is_correct',
+        'result_id',
     ];
     protected $table = 'answers';
 
@@ -27,10 +28,5 @@ class Answer extends Model
     {
         return $this->hasOne(AnswerFeedback::class, 'answer_id');
     }
-
-
-
-
-
 
 }

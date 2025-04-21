@@ -130,7 +130,6 @@ class QuizRepository extends AppRepository
 
         $duration = $quiz->duration * 60;
         $attempt = $quiz->attempts()->where('student_id', $studentId)->first();
-
         if ($attempt) {
             $timeElapsed = $attempt->created_at->diffInSeconds(now());
 
@@ -150,6 +149,7 @@ class QuizRepository extends AppRepository
         return response()->json([
             'quiz' => $quiz->load(['questions.choices']),
             'duration' => $duration,
+            'class_id' => $quiz->class_id,
         ], 200);
 
     }
@@ -164,55 +164,73 @@ class QuizRepository extends AppRepository
         $total_mark = 0;
         $student_mark = 0;
 
+        //check if result already exists
+        $result = $quiz->results()->where('student_id', $student_id)->first();
+        if ($result) {
+            return response()->json([
+                'message' => 'You have already submitted this quiz',
+            ], 422);
+        }
+
         foreach ($questions as $question) {
-            $originalQuestion = Question::find(id: $question['question_id']);
-            //add the mark of the question to the total mark
-            $total_mark += $originalQuestion['mark'];
+            $originalQuestion = Question::find($question['question_id']);
+            $total_mark += $originalQuestion->mark;
+        }
+
+        $result = $quiz->results()->create([
+            'student_id' => $student_id,
+            'quiz_id' => $quiz_id,
+            'total_mark' => $total_mark,
+            'student_mark' => 0,
+        ]);
+
+        foreach ($questions as $question) {
+            $originalQuestion = Question::find($question['question_id']);
+
             if ($question['type'] == 'mcq') {
-                //check if the answer is correct
                 $correctAnswer = $originalQuestion->model_answer;
                 $studentAnswer = $question['answer'];
-                if ($correctAnswer == $studentAnswer) {
-                    //add the mark of the question to the student mark
-                    $student_mark += $originalQuestion['mark'];
-                }
-                //save the answer in the answers table
+                $isCorrect = $correctAnswer == $studentAnswer;
+                $mark = $isCorrect ? $originalQuestion->mark : 0;
+
+                $student_mark += $mark;
+
                 $originalQuestion->answers()->create([
                     'student_id' => $student_id,
                     'question_id' => $question['question_id'],
                     'answer' => $studentAnswer,
-                    'mark' => $correctAnswer == $studentAnswer ? $originalQuestion['mark'] : 0,
-                    'is_correct' => $correctAnswer == $studentAnswer ? 1 : 0,
+                    'mark' => $mark,
+                    'is_correct' => $isCorrect,
+                    'result_id' => $result->id,
                 ]);
-
             } else {
-                //save the answer in the answers table
+                $score = $question['score'] ?? 0;
+                $mark = $score * $originalQuestion->mark;
+                $student_mark += $mark;
+
                 $answer = $originalQuestion->answers()->create([
                     'student_id' => $student_id,
                     'question_id' => $question['question_id'],
                     'answer' => $question['answer'],
-                    'mark' => $question['score'] ? $question['score'] * $originalQuestion['mark'] : 0,
+                    'mark' => $mark,
                     'is_correct' => 0,
+                    'result_id' => $result->id,
                 ]);
-                //save the feedback in the answer_feedback table
+
                 $answer->feedback()->create([
                     'answer_id' => $answer->id,
                     'feedback' => $question['feedback'],
                 ]);
-                //add the mark of the question to the student mark
-                if ($question['score']) {
-                    $student_mark += $question['score'] * $originalQuestion['mark'];
-                }
             }
         }
-        $quiz->results()->create([
-            'student_id' => $student_id,
-            'quiz_id' => $quiz_id,
-            'total_mark' => $total_mark,
+
+        $result->update([
             'student_mark' => $student_mark,
         ]);
+
         return response()->json([
-            'message' => 'Quiz submitted successfully'
+            'message' => 'Quiz submitted successfully',
+            'result_id' => $result->id,
         ], 200);
     }
 

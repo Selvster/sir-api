@@ -17,5 +17,9 @@ class ClassController extends Controller
     public function removeStudent($id, $student_id){
         return $this->repository->removeStudent($id, $student_id);
     }
+
+    public function getQuizzes($id){
+        return $this->repository->getQuizzes($id);
+    }
    
 }

@@ -22,4 +22,5 @@ class Teacher extends Model
         return $this->hasMany(ClassModel::class, 'teacher_id');
     }
 
+
 }

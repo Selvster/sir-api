@@ -23,5 +23,10 @@ class UserController extends Controller
     {
         return $this->repository->register($request);
     }
+
+    public function user()
+    {
+        return $this->repository->user();
+    }
    
 }

@@ -19,7 +19,12 @@ class Student extends Model
 
     public function classes()
     {
-        return $this->belongsToMany(ClassModel::class, 'class_students', 'student_id', 'class_id');
+        return $this->belongsToMany(ClassModel::class, 'classes_students', 'student_id', 'class_id');
+    }
+
+    public function results()
+    {
+        return $this->hasMany(Result::class, 'student_id');
     }
 
 

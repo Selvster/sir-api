@@ -43,7 +43,8 @@ class ClassRepository extends AppRepository
 
         return response()->json([
             'message' => 'Class created successfully',
-            'code' => $class->code,
+            'id' => $class->id,
+            
         ], 201);
     }
 
@@ -60,6 +61,28 @@ class ClassRepository extends AppRepository
 
         return response()->json([
             'message' => 'Student removed from class successfully',
+        ], 200);
+    }
+
+    public function getQuizzes($id){
+        $class = $this->model->find($id);
+        if (!$class) {
+            return response()->json([
+                'message' => 'Class not found',
+            ], 404);
+        }
+
+        $studentId = auth()->user()->student->id;
+
+        $quizzes = $class->quizzes()->with([
+            'results' => function ($query) use ($studentId) {
+                $query->where('student_id', $studentId);
+            }
+        ])->get();
+        
+        return response()->json([
+            'class' => $class,
+            'quizzes' => $quizzes,
         ], 200);
     }
 

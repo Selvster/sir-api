@@ -26,6 +26,11 @@ class Result extends Model
     {
         return $this->belongsTo(Quiz::class, 'quiz_id');
     }
+
+    public function answers()
+    {
+        return $this->hasMany(Answer::class, 'result_id');
+    }
   
 
 

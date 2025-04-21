@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use App\Models\Student;
 use App\Models\Teacher;
+use Illuminate\Support\Facades\Auth;
 
 class UserRepository extends AppRepository
 {
@@ -74,5 +75,41 @@ class UserRepository extends AppRepository
             'token' => $token,
             'user' => $user
         ]);
+    }
+
+    public function user()
+    {
+        if (auth()->user()->isStudent()) {
+
+            $student = Auth::user()->student;
+
+            $resultsCount = $student->results()->count();
+
+            $classesCount = $student->classes()->count();
+
+            return json_encode([
+                'user' => $student->user,
+                'info' => [
+                    'quizzes_count' => $resultsCount,
+                    'classes_count' => $classesCount,
+                ]
+            ]);
+
+
+        } else if (auth()->user()->isTeacher()) {
+            $teacher = Auth::user()->teacher;
+
+            $quizzesCount = $teacher->classes()->withCount('quizzes')->get()->sum('quizzes_count');
+        
+            $classesCount = $teacher->classes()->count();
+
+            return json_encode([
+                'user' => $teacher->user,
+                'info' => [
+                    'quizzes_count' => $quizzesCount,
+                    'classes_count' => $classesCount,
+                ]
+            ]);
+        }
     }
 }

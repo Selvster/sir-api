@@ -34,7 +34,7 @@ class AppRepository
         $item = $this->model;
         $item->fill($data);
         $item->save();
-        return ['item' => $item , 'status' => 'success'];
+        return ['item' => $item, 'status' => 'success'];
     }
 
     public function update($id, Request $request)
@@ -106,19 +106,23 @@ class AppRepository
                     $query->where($filter[0], $filter[1]);
             }
         }
-        if ($request->count) return  $query->count();
-        if (!$request->per_page) return  $query->get();
-
         $sort = explode("|", $request->sort);
 
         if ($request->sort) {
             if ($sort[0] == 'id') {
-                $query =  $query->orderBy("id", "desc");
+                $query = $query->orderBy("id", "desc");
             }
             $query = $query->orderBy($sort[0], $sort[1]);
         } else {
             $query->orderBy("id", "desc");
         }
+
+        if ($request->count)
+            return $query->count();
+        if (!$request->per_page)
+            return $query->get();
+
+
         $perPage = $request->per_page;
 
         $page = ($request->page - 1) * $request->per_page;
@@ -127,7 +131,7 @@ class AppRepository
 
     public function destroy($id)
     {
-        return  $this->model->destroy($id);
+        return $this->model->destroy($id);
     }
     public function create(array $attributes)
     {
